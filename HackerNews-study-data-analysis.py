@@ -47,13 +47,26 @@ def analyze_seniority_levels(data: pd.DataFrame, force_normalize=False):
         row_sums = seniority_proportions.sum(axis=1)
         seniority_proportions = seniority_proportions.div(row_sums, axis=0).fillna(0)
     
+    #color for each seniority level
+    custom_colors = {
+        'Junior': '#73d6ee',
+        'Mid-level': '#0d3b66',
+        'Senior': '#b8ffc6',
+        'Lead': '#2dc48d',
+        'Manager': '#1b7b3d',
+        'Executive': 'black',
+    }
+
     # Plot cumulative (stacked) area graph
     plt.figure(figsize=(12, 6))
-    ax = seniority_proportions.plot.area(stacked=True, figsize=(12, 6))
+    ax = seniority_proportions.plot.area(stacked=True, figsize=(12, 6), color=[custom_colors[cat] for cat in seniority_proportions.columns])
     normalized = "_normalized" if force_normalize else ""
     normalized_title = " Normalized" if force_normalize else ""
     
-    plt.title(f'Cumulative Seniority Level Trend{normalized_title}')
+    # Format y-axis to show percentages
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1))
+
+    plt.title(f'Cumulative Seniority Level Trend (2011-2024){normalized_title}')
     plt.xlabel('Date')
     plt.ylabel('Percentage of Seniority Levels')
     plt.legend(title='Type', bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -230,6 +243,9 @@ def analyze_top_tech_stack(data):
 
     yearly_data = data.groupby("year")
 
+    #filter out 2024 data
+    data_2024 = data[data['year'] == 2024]
+
     # Count NA values and empty lists
     na_count = sum(group['tech_stack'].isna().sum() for _, group in yearly_data)
     empty_list_count = sum((group['tech_stack'] == '[]').sum() for _, group in yearly_data)
@@ -238,17 +254,22 @@ def analyze_top_tech_stack(data):
     print(f"Number of empty lists in tech_stack: {empty_list_count}")
 
     # Flatten and normalize all tech stacks
-    all_techs = [normalize_tech(tech.strip()) 
-                 for _, group in yearly_data
-                 for techs in group['tech_stack'].dropna() 
-                 for tech in techs.split(',') if tech.strip()]
+    #all_techs = [normalize_tech(tech.strip()) 
+    #             for _, group in yearly_data
+    #             for techs in group['tech_stack'].dropna() 
+    #             for tech in techs.split(',') if tech.strip()]
     
-    # Count occurrences and get top 10 technologies
-    tech_counts = Counter(all_techs)
-    top_techs = [tech for tech, _ in tech_counts.most_common(10)]
+    # Flatten and normalize tech stacks for 2024
+    all_techs_2024 = [normalize_tech(tech.strip()) 
+                      for techs in data_2024['tech_stack'].dropna() 
+                      for tech in techs.split(',') if tech.strip()]
+
+    # Count occurrences and get top 20 technologies for 2024
+    tech_counts_2024 = Counter(all_techs_2024)
+    top_techs_2024 = [tech for tech, _ in tech_counts_2024.most_common(15)]
 
     # Prepare data for cumulative graph
-    tech_trends = {tech: [] for tech in top_techs}
+    tech_trends = {tech: [] for tech in top_techs_2024}
     dates = []
 
     for date, group in yearly_data:
@@ -258,8 +279,34 @@ def analyze_top_tech_stack(data):
         tech_counts = techs.value_counts()
         group_size = len(group)  # Number of entries in the group
         
-        for tech in top_techs:
+        for tech in top_techs_2024:
             tech_trends[tech].append(tech_counts.get(tech, 0) / group_size)
+
+     #color for each technology
+    custom_colors = {
+        'react': '#167288',
+        'python': '#8cdaec',
+        'ts': '#b45248',
+        'postgres': '#d48c84',
+        'aws': '#a89a49',
+        'go': '#d6cfa2',
+        'node': '#3cb464',
+        'kubernetes': '#9bddb1',
+        'rust': '#643c6a',
+        'js': '#836394',
+        'java': '#f58231',
+        'terraform': '#aaf0d1',
+        'docker': '#bfef45',
+        'ruby': '#3cb44b',
+        'django': '#4363d8',
+        'redis': '#911eb4',
+        'rails': '#f032e6',
+        'c++': '#a9a9a9',
+        'mysql': '#fabed4',
+        'ruby on rails': '#fffac8',
+        'linux': '#aaffc3',
+        'php': '#dcbeff',
+    }
 
     # Plot cumulative (stacked) area graph
     plt.figure(figsize=(12, 6))
@@ -268,17 +315,20 @@ def analyze_top_tech_stack(data):
     df_trends = pd.DataFrame(tech_trends, index=dates)
     
     # Create the stacked area plot
-    ax = df_trends.plot.area(stacked=True, figsize=(12, 6))
+    ax = df_trends.plot.area(stacked=True, figsize=(12, 6), color=[custom_colors[cat] for cat in df_trends.columns])
+
+    # Format y-axis to show percentages
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1))
     
-    plt.title('Cumulative Top 10 Technologies Trend')
+    plt.title('Cumulative 2024 Top 15 Technologies Trend')
     plt.xlabel('Date')
     plt.ylabel('Cumulative Percentage of Jobs Mentioning Technologies')
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
-    plt.savefig("top_10_technologies_cumulative_trend.png")
+    plt.savefig("2024_top_15_technologies_cumulative_trend.png")
     plt.close()
 
-    print(f"Top 10 technologies: {', '.join(top_techs)}")
+    print(f"2024 top 15 technologies: {', '.join(top_techs_2024)}")
 
 
 def analyze_all_tech_stack(csv_path: str = "HN_case_study_expanded.csv"):
