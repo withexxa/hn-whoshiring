@@ -221,25 +221,72 @@ def analyze_company_sizes(monthly_data):
     analyze_trends(monthly_data, 'company_size', sizes, 'Company Sizes', 'company_sizes')
 
 
-def analyze_top_tech_stack(data):
-    # Helper function to normalize tech names
-    def normalize_tech(tech):
-        tech = tech.lower()
+def normalize_tech(tech):
+        tech = tech.lower().strip()
         replacements = {
             'javascript': 'js',
             'typescript': 'ts',
-            'react.js': 'react',
-            'reactjs': 'react',
-            'react native': 'react',
-            'react-native': 'react',
-            'vue.js': 'vue',
-            'vuejs': 'vue',
-            'node.js': 'node',
-            'nodejs': 'node',
+            
+            'react.js': 'react','reactjs': 'react','react native': 'react','react-native': 'react',
+            'react/redux': 'react','reactnative': 'react','react js': 'react','javascript/react': 'react',
+            'react.js/flux':'react','react.js/redux':'react','react/react-native':'react','js/react':'react',
+            'react/flux':'react','react 0.17':'react',
+
+            'angularjs': 'angular','angular.js': 'angular','angular 2': 'angular','angular js': 'angular',
+            'angular 2+': 'angular','angular2': 'angular','angular 1': 'angular','angular 8': 'angular',
+            'angular 6': 'angular','angular 7': 'angular','angular 9': 'angular','angular 10': 'angular',
+            'angular 4': 'angular','angular 5': 'angular','angular 1.x': 'angular','angular material': 'angular',
+            'angular 2.0': 'angular','angular 2.x': 'angular','angular 6+': 'angular','angular 7+': 'angular',
+            'angular 11': 'angular','angular 1.6': 'angular','angular 1.7': 'angular','angular 1.8': 'angular',
+
+            'vue.js': 'vue','vuejs': 'vue','vue js': 'vue','vuex': 'vue','vue 3': 'vue','vue 2': 'vue',
+            'vue3': 'vue','vue 1': 'vue','vue 0': 'vue','vue 1.x': 'vue','vue 2.x': 'vue',
+            'vue/js': 'vue','vue2': 'vue','vue.js 3': 'vue','vue.js 2': 'vue','vue.js 1': 'vue',
+            
+            'sveltekit':'svelte','svelte 3':'svelte','svelte 2':'svelte','svelte 1':'svelte','svelte':'svelte',
+            'svelte js':'svelte','svelte.js':'svelte','svelte.js 3':'svelte','svelte.js 2':'svelte','svelte.js 1':'svelte',
+            
+            'node.js': 'node','nodejs': 'node',
             'postgresql': 'postgres',
             'golang': 'go',
+            'ruby on rails': 'rails',
+
+            'amazon web services': 'aws','aws lambda': 'aws','amazon aws': 'aws',
+            'aws services': 'aws','aws ec2': 'aws','aws ecs': 'aws','amazon web services (aws)': 'aws',
+            'aws cloud': 'aws','aws batch': 'aws','aws cloud services': 'aws','aws lambdas': 'aws',
+            'aws serverless': 'aws','cloud iaas (aws)': 'aws','aws sagemaker': 'aws','aws sqs': 'aws','aws-serverless': 'aws',
+            
+            'azure devops': 'azure', 'microsoft azure': 'azure', 'azure cloud services': 'azure',
+            'ms azure': 'azure', 'azure functions': 'azure','azuredevops': 'azure','azure devops': 'azure',
+            'windows azure': 'azure','microsoft azure iaas': 'azure','microsoft azure paas': 'azure',
+
+            'google cloud': 'gcp','google cloud platform': 'gcp','google cloud platform (gcp)': 'gcp',
+            'google cloud functions': 'gcp','google cloud services': 'gcp','google cloud ml': 'gcp',
+            'google cloud storage': 'gcp','google cloud/container engine': 'gcp',
+
+            'cloudformation': 'aws cloudformation',
+            'gitlab': 'gitlab ci',
+            'travis': 'travis ci',
+            'circle': 'circleci',
+            'elasticsearch': 'elastic search', 
+            'html5': 'html',
+            'css3': 'css', 
+            'elastic': 'elastic search', 
+            'python3': 'python', 
+            
+            'tensorflow/caffe': 'tensorflow', 'tensorflow probability': 'tensorflow','tensorflow': 'tensorflow', 
+            'tensorflow.js': 'tensorflow','smile/tensorflow': 'tensorflow','tensorflow & keras': 'tensorflow', 
+            'tensorflow lite': 'tensorflow','tensorflow gpu': 'tensorflow','python/tensorflow': 'tensorflow',
+            'tensorflow ii': 'tensorflow',
+            
+            'pytorch lightning': 'pytorch','python/pytorch': 'pytorch','pytorch geometric': 'pytorch',
+            'torch/pytorch': 'pytorch'
         }
         return replacements.get(tech, tech)
+
+
+
+def analyze_top_tech_stack(data, normalize_func=normalize_tech):
 
     yearly_data = data.groupby("year")
 
@@ -260,7 +307,7 @@ def analyze_top_tech_stack(data):
     #             for tech in techs.split(',') if tech.strip()]
     
     # Flatten and normalize tech stacks for 2024
-    all_techs_2024 = [normalize_tech(tech.strip()) 
+    all_techs_2024 = [normalize_func(tech.strip()) 
                       for techs in data_2024['tech_stack'].dropna() 
                       for tech in techs.split(',') if tech.strip()]
 
@@ -275,7 +322,7 @@ def analyze_top_tech_stack(data):
     for date, group in yearly_data:
         # dates.append(pd.to_datetime(date + '-01'))
         dates.append(date)
-        techs = group['tech_stack'].dropna().str.split(',').explode().apply(normalize_tech)
+        techs = group['tech_stack'].dropna().str.split(',').explode().apply(normalize_func)
         tech_counts = techs.value_counts()
         group_size = len(group)  # Number of entries in the group
         
@@ -306,6 +353,11 @@ def analyze_top_tech_stack(data):
         'ruby on rails': '#fffac8',
         'linux': '#aaffc3',
         'php': '#dcbeff',
+        'gcp': 'green',
+        'azure': 'blue',
+        'angular': 'red',
+        'vue': 'green',
+        'svelte': 'yellow',
     }
 
     # Plot cumulative (stacked) area graph
@@ -331,6 +383,179 @@ def analyze_top_tech_stack(data):
     print(f"2024 top 15 technologies: {', '.join(top_techs_2024)}")
 
 
+def analyze_tech_stack(data, tech_list, title, normalize_func=normalize_tech):
+
+    yearly_data = data.groupby("year")
+
+    # Prepare data for cumulative graph
+    tech_trends = {tech: [] for tech in tech_list}
+    dates = []
+
+    for date, group in yearly_data:
+        dates.append(date)
+        techs = group['tech_stack'].dropna().str.split(',').explode().apply(normalize_func)
+        tech_counts = techs.value_counts()
+        group_size = len(group)  # Number of entries in the group
+        
+        for tech in tech_list:
+            tech_trends[tech].append(tech_counts.get(tech, 0) / group_size)
+
+    # Custom colors for DevOps technologies
+    custom_colors = {
+        'docker': '#0db7ed', 'kubernetes': '#326ce5', 'terraform': '#7B42BC', 
+        'ansible': '#EE0000', 'chef': '#F09820', 'puppet': '#FFAE1A', 
+        'jenkins': '#D33833', 'circleci': '#343434', 'gitlab ci': '#FCA121', 
+        'travis ci': '#3EAAAF', 'aws cloudformation': '#FF9900', 'vagrant': '#1563FF',
+        'hashicorp vault': '#000000', 'consul': '#F24C53', 'prometheus': '#E6522C', 
+        'grafana': '#F46800', 'helm': '#0F1689',
+        'aws': 'orange', 'azure': 'blue', 'gcp': 'green',
+        'react': '#167288', 'angular': 'red', 'vue': 'green', 'svelte': 'yellow'
+    }
+
+    # Plot cumulative (stacked) area graph
+    plt.figure(figsize=(12, 6))
+    
+    # Convert tech_trends to a DataFrame for easier manipulation
+    df_trends = pd.DataFrame(tech_trends, index=dates)
+    
+
+
+    # Plot cumulative (stacked) area graph
+    ax = df_trends.plot.area(stacked=True, figsize=(12, 6), color=[custom_colors.get(cat, '#333333') for cat in df_trends.columns])
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1))
+    plt.title(f'Cumulative {title} Trend (2011-2024)')
+    plt.xlabel('Date')
+    plt.ylabel('Cumulative Percentage of Jobs Mentioning Technologies')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    plt.savefig(f"{title}_cumulative_trend.png")
+    plt.close()
+
+    print(f"{title} technologies analyzed: {', '.join(tech_list)}")
+
+    # Plot 100% stacked area graph
+    plt.figure(figsize=(12, 6))
+    df_percentage = df_trends.div(df_trends.sum(axis=1), axis=0)
+    ax = df_percentage.plot.area(stacked=True, figsize=(12, 6), color=[custom_colors.get(cat, '#333333') for cat in df_percentage.columns])
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1))
+    plt.title(f'Relative {title} Trend (100% Stacked)')
+    plt.xlabel('Date')
+    plt.ylabel('Relative Percentage of Jobs Mentioning Technologies')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    plt.savefig(f"{title}_technologies_relative_trend.png")
+    plt.close()
+
+
+def analyze_tech_monthly_trends(data, tech_list, title, normalize_func=normalize_tech):
+
+    # Create a year-month column for easier grouping
+    data['year_month'] = data['year'].astype(str) + '-' + data['month'].astype(str).str.zfill(2)
+
+    # Sort by year-month
+    data = data.sort_values('year_month')
+    
+    # Group by year-month
+    monthly_data = data.groupby('year_month')
+    
+    # Prepare data for graph
+    tech_trends = {tech: [] for tech in tech_list}
+    dates = []
+
+    for date, group in monthly_data:
+        dates.append(pd.to_datetime(date + '-01'))
+        techs = group['tech_stack'].dropna().str.split(',').explode().apply(normalize_func)
+        tech_counts = techs.value_counts()
+        group_size = len(group)  # Number of entries in the group
+        
+        for tech in tech_list:
+            tech_trends[tech].append(tech_counts.get(tech, 0) / group_size)
+
+    # Convert tech_trends to a DataFrame for easier manipulation
+    df_trends = pd.DataFrame(tech_trends, index=dates)
+    
+
+    # Custom colors for technologies
+    custom_colors = {
+        'pytorch': '#0db7ed', 'tensorflow': '#326ce5',
+        'aws': 'orange','azure': 'blue','gcp': 'green',
+        'react': '#167288', 'angular': 'red', 'vue': 'green', 'svelte': 'yellow'
+    }
+
+    # Plot line graph
+    plt.figure(figsize=(12, 6))
+    for tech in tech_list:
+        plt.plot(dates, df_trends[tech], label=tech, color=custom_colors.get(tech, '#333333'), linewidth=2)
+    
+    plt.title(title)
+    plt.xlabel('Date')
+    plt.ylabel('Percentage of Jobs Mentioning Technology')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
+    plt.tight_layout()
+
+    # Format x-axis to show dates nicely
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+    plt.gca().xaxis.set_major_locator(mdates.YearLocator())
+    plt.gcf().autofmt_xdate()  # Rotation
+    
+    plt.tight_layout()
+    
+    # Generate filename from title
+    filename = title.lower().replace(' ', '_') + '_trend.png'
+    plt.savefig(filename)
+    plt.close()
+
+    print(f"Plot saved as {filename}")
+
+
+def analyze_tech_trends(data, tech_list, title, normalize_func=normalize_tech):
+
+    yearly_data = data.groupby("year")
+    
+    # Prepare data for graph
+    tech_trends = {tech: [] for tech in tech_list}
+    dates = []
+
+    for date, group in yearly_data:
+        dates.append(date)
+        techs = group['tech_stack'].dropna().str.split(',').explode().apply(normalize_func)
+        tech_counts = techs.value_counts()
+        group_size = len(group)  # Number of entries in the group
+        
+        for tech in tech_list:
+            tech_trends[tech].append(tech_counts.get(tech, 0) / group_size)
+
+    # Convert tech_trends to a DataFrame for easier manipulation
+    df_trends = pd.DataFrame(tech_trends, index=dates)
+    
+
+    # Custom colors for technologies
+    custom_colors = {
+        'pytorch': '#0db7ed', 'tensorflow': '#326ce5',
+        'aws': 'orange','azure': 'blue','gcp': 'green',
+        'react': '#167288', 'angular': 'red', 'vue': 'green', 'svelte': 'yellow'
+    }
+
+    # Plot line graph
+    plt.figure(figsize=(12, 6))
+    for tech in tech_list:
+        plt.plot(dates, df_trends[tech], label=tech, color=custom_colors.get(tech, '#333333'), linewidth=2)
+    
+    plt.title(title)
+    plt.xlabel('Year')
+    plt.ylabel('Percentage of Jobs Mentioning Technology')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
+    plt.tight_layout()
+    
+    # Generate filename from title
+    filename = title.lower().replace(' ', '_') + '_trend.png'
+    plt.savefig(filename)
+    plt.close()
+
+    print(f"Plot saved as {filename}")
+
 def analyze_all_tech_stack(csv_path: str = "HN_case_study_expanded.csv"):
     # Read the CSV file
     df = pd.read_csv(csv_path)
@@ -350,7 +575,7 @@ def analyze_all_tech_stack(csv_path: str = "HN_case_study_expanded.csv"):
     # Create a DataFrame from the counter
     tech_df = pd.DataFrame.from_dict(tech_counts, orient='index', columns=['count'])
     tech_df.index.name = 'technology'
-    tech_df = tech_df.sort_index()
+    tech_df = tech_df.sort_values(by='count', ascending=False)
 
     # Save to CSV
     tech_df.to_csv("all_technologies_count.csv")
@@ -411,7 +636,30 @@ def temporal_analysis(csv_path: str = "HN_case_study_expanded.csv"):
     analyze_company_sizes(monthly_data)
     analyze_top_tech_stack(df_job_offers)
 
-    plot_trend_chartbar(list(monthly_data.size().items()), 'Job Postings Trend', 'Number of Job Postings')
+
+    # List of DevOps technologies to track
+    devops_techs = [
+        'docker', 'kubernetes', 'terraform', 'ansible', 'chef', 'puppet', 'jenkins',
+        'circleci', 'gitlab ci', 'travis ci', 'aws cloudformation', 'vagrant',
+        'hashicorp vault', 'consul', 'prometheus', 'grafana', 'helm'
+    ]
+    analyze_tech_stack(df_job_offers, devops_techs, "DevOps")
+
+    # Pytorch vs. Tensorflow analysis
+    ML_techs = ['pytorch', 'tensorflow']    
+    analyze_tech_trends(df_job_offers, ML_techs, "ML Frameworks")
+    #analyze_tech_monthly_trends(df_job_offers, ML_techs, "ML Frameworks")
+
+    #Cloud providers analysis
+    Cloud_techs = ['aws', 'azure', 'gcp']
+    analyze_tech_stack(df_job_offers, Cloud_techs, "Cloud Providers")
+    analyze_tech_trends(df_job_offers, Cloud_techs, "Cloud Providers")
+
+    # Frontend frameworks analysis
+    frontend_techs = ['react', 'angular', 'vue', 'svelte']
+    analyze_tech_stack(df_job_offers, frontend_techs, "Frontend Frameworks")
+    analyze_tech_trends(df_job_offers, frontend_techs, "Frontend Frameworks")
+
     # Calculate the number of job postings per year
     numerical_analysis(df_job_offers)
  
