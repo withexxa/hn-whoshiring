@@ -81,6 +81,9 @@ def analyze_seniority_levels(data: pd.DataFrame, force_normalize=False):
     print(seniority_proportions.head())
 
 
+
+
+
 def analyze_trends(monthly_data, column, categories, title, filename, force_normalize=False):
     # Calculate percentages for each category
     trends = monthly_data[column].apply(lambda x: x.value_counts(normalize=True, dropna=False))
@@ -126,14 +129,14 @@ def analyze_trends(monthly_data, column, categories, title, filename, force_norm
         'Small': 'orange',
         'Medium': 'pink',
         'Large': 'brown',
-        '0-100k': '#b8ffc6',
-        '100k-120k': '#06dfc8',
-        '120k-140k': '#0bbfbc',
-        '140k-160k': '#119fb0',
-        '160k-180k': '#167fa3',
-        '180k-200k': '#1c5f97',
-        '200k-220k': '#213f8b',
-        '220k+': '#271f7f',
+        '$0-100k': '#b8ffc6',
+        '$100k-120k': '#06dfc8',
+        '$120k-140k': '#0bbfbc',
+        '$140k-160k': '#119fb0',
+        '$160k-180k': '#167fa3',
+        '$180k-200k': '#1c5f97',
+        '$200k-220k': '#213f8b',
+        '$220k+': '#271f7f',
         'job-demand': 'red',
         'job-offer': 'blue'
     }
@@ -147,9 +150,9 @@ def analyze_trends(monthly_data, column, categories, title, filename, force_norm
     # Format y-axis to show percentages
     ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1))
     
-    plt.title(f'Cumulative {title} Trend{normalized_title}')
+    plt.title(f'Cumulative {title} Trend (2011-2024){normalized_title}')
     plt.xlabel('Date')
-    plt.ylabel('Percentage of Types')
+    plt.ylabel('Percentage of Jobs Offers')
     plt.legend(title='Type', bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
     plt.savefig(f"{filename}_cumulative_trend{normalized}.png")
@@ -170,8 +173,8 @@ def analyze_remote_trends(monthly_data):
 
 def analyze_compensation_trends(data):
     # Calculate average compensation for each group
-    categories = ['0-100k', '100k-120k', '120k-140k', '140k-160k',
-        '160k-180k', '180k-200k', '200k-220k', '220k+']
+    categories = ['$0-100k', '$100k-120k', '$120k-140k', '$140k-160k',
+        '$160k-180k', '$180k-200k', '$200k-220k', '$220k+']
     data = data[data['year'] != 2011]
     yearly_data = data.groupby("year")
     
@@ -183,7 +186,7 @@ def analyze_job_demand_offer_trends(monthly_data):
 
 def analyze_visa_sponsoring(monthly_data):
     visa_trend = monthly_data['visa_sponsoring'].mean()
-    plot_trend(list(visa_trend.items()), 'Visa Sponsoring Trend', 'Percentage of Jobs Offering Visa Sponsorship', 'line')
+    plot_trend(list(visa_trend.items()), 'Visa Sponsoring Trend (2011-2024)', 'Percentage of Jobs Offering Visa Sponsorship', 'line')
 
 def analyze_job_types(monthly_data):
     job_types = ['full-time', 'part-time', 'contract', 'intern']
@@ -260,11 +263,20 @@ def normalize_tech(tech):
             'postgresql 13': 'postgres', 'postgresql 14': 'postgres', 'postgresql 15': 'postgres',
 
             'mongo': 'mongodb', 'mongo db': 'mongodb','mongodb atlas': 'mongodb',
-
             'redis failover': 'redis', 'redis labs': 'redis',
-
             'golang': 'go',
             'ruby on rails': 'rails',
+
+            'docker compose': 'docker', 'docker swarm': 'docker', 'docker/ecs': 'docker', 'docker-compose': 'docker',
+            'docker/docker swarm': 'docker',
+
+            'kubernetes': 'kubernetes', 'kubernets': 'kubernetes',
+
+            'saltstack/terraform': 'terraform', 'terraform cdk': 'terraform', 'hashicorp stack (terraform': 'terraform',
+            'hashicorp terraform': 'terraform',
+
+            'jenkins ci': 'jenkins', 'ci/jenkins': 'jenkins', 'jenkins continuous integration': 'jenkins',
+            'circle ci': 'circleci', 'circleci/mocha': 'circleci', 'circle-ci': 'circleci',
 
             'amazon web services': 'aws','aws lambda': 'aws','amazon aws': 'aws',
             'aws services': 'aws','aws ec2': 'aws','aws ecs': 'aws','amazon web services (aws)': 'aws',
@@ -283,15 +295,17 @@ def normalize_tech(tech):
             'gitlab': 'gitlab ci',
             'travis': 'travis ci',
             'circle': 'circleci',
-            'elasticsearch': 'elastic search', 
+
+            'elasticsearch': 'elastic search', 'elastic': 'elastic search', 'elastic stack': 'elastic search',
+
+            'algolia search': 'algolia',
+
             'html5': 'html',
             'css3': 'css', 
-            'elastic': 'elastic search',
-
+            
             'python3': 'python', 'python 3': 'python', 'python/django': 'python', 'python 3.6': 'python', 'python 2.7': 'python',
             'ipython': 'python', 'serverless python': 'python', 'python 3.9': 'python', 'python 3.8': 'python', 'python 3.7': 'python',
             'django/python': 'python',
-
             
             'tensorflow/caffe': 'tensorflow', 'tensorflow probability': 'tensorflow','tensorflow': 'tensorflow', 
             'tensorflow.js': 'tensorflow','smile/tensorflow': 'tensorflow','tensorflow & keras': 'tensorflow', 
@@ -354,14 +368,14 @@ def analyze_top_tech_stack(data, normalize_func=normalize_tech):
         'python': '#8cdaec',
         'ts': '#b45248',
         'postgres': '#d48c84',
-        'aws': '#a89a49',
+        'aws': '#f58231',
         'go': '#d6cfa2',
         'node': '#3cb464',
         'kubernetes': '#9bddb1',
+        'terraform': '#aaf0d1',
         'rust': '#643c6a',
         'js': '#836394',
-        'java': '#f58231',
-        'terraform': '#aaf0d1',
+        'java': '#a89a49',
         'docker': '#bfef45',
         'ruby': '#3cb44b',
         'django': '#4363d8',
@@ -421,13 +435,13 @@ def analyze_tech_stack(data, tech_list, title, normalize_func=normalize_tech):
 
     # Custom colors for DevOps technologies
     custom_colors = {
-        'docker': '#0db7ed', 'kubernetes': '#326ce5', 'terraform': '#7B42BC', 
+        'kubernetes': '#9bddb1','terraform': '#aaf0d1','docker': '#bfef45',
         'ansible': '#EE0000', 'chef': '#F09820', 'puppet': '#FFAE1A', 
         'jenkins': '#D33833', 'circleci': '#343434', 'gitlab ci': '#FCA121', 
         'travis ci': '#3EAAAF', 'aws cloudformation': '#FF9900', 'vagrant': '#1563FF',
         'hashicorp vault': '#000000', 'consul': '#F24C53', 'prometheus': '#E6522C', 
         'grafana': '#F46800', 'helm': '#0F1689',
-        'aws': 'orange', 'azure': 'blue', 'gcp': 'green',
+        'aws': '#f58231', 'azure': 'blue', 'gcp': 'green',
         'react': '#167288', 'angular': 'red', 'vue': 'green', 'svelte': 'yellow'
     }
 
@@ -436,8 +450,6 @@ def analyze_tech_stack(data, tech_list, title, normalize_func=normalize_tech):
     
     # Convert tech_trends to a DataFrame for easier manipulation
     df_trends = pd.DataFrame(tech_trends, index=dates)
-    
-
 
     # Plot cumulative (stacked) area graph
     ax = df_trends.plot.area(stacked=True, figsize=(12, 6), color=[custom_colors.get(cat, '#333333') for cat in df_trends.columns])
@@ -497,8 +509,11 @@ def analyze_tech_monthly_trends(data, tech_list, title, normalize_func=normalize
     # Custom colors for technologies
     custom_colors = {
         'pytorch': '#0db7ed', 'tensorflow': '#326ce5',
-        'aws': 'orange','azure': 'blue','gcp': 'green',
-        'react': '#167288', 'angular': 'red', 'vue': 'green', 'svelte': 'yellow'
+        'aws': '#f58231','azure': 'blue','gcp': 'green',
+        'react': '#167288', 'angular': 'red', 'vue': 'green', 'svelte': 'yellow',
+        'postgre': 'blue', 'mongodb': 'green', 'redis': 'red', 
+        'elastic search': 'purple', 'algolia': 'pink', 
+        'kubernetes': '#9bddb1','terraform': '#aaf0d1','docker': '#bfef45',
     }
 
     # Plot line graph
@@ -552,15 +567,18 @@ def analyze_tech_trends(data, tech_list, title, normalize_func=normalize_tech):
     # Custom colors for technologies
     custom_colors = {
         'pytorch': '#0db7ed', 'tensorflow': '#326ce5',
-        'aws': 'orange','azure': 'blue','gcp': 'green',
-        'react': '#167288', 'angular': 'red', 'vue': 'green', 'svelte': 'yellow'
+        'aws': '#f58231','azure': 'blue','gcp': 'green',
+        'react': '#167288', 'angular': 'red', 'vue': 'green', 'svelte': 'yellow',
+        'postgres': '#d48c84', 'mongodb': '#4DB33D', 'redis': '#DC382D',
+        'elastic search': 'purple', 'algolia': 'pink', 
+        'kubernetes': '#9bddb1','terraform': '#aaf0d1','docker': '#bfef45', 
     }
 
     # Plot line graph
     plt.figure(figsize=(12, 6))
     for tech in tech_list:
-        plt.plot(dates, df_trends[tech], label=tech, color=custom_colors.get(tech, '#333333'), linewidth=2)
-    
+        plt.plot(dates, df_trends[tech], 'o-', label=tech, color=custom_colors.get(tech, '#333333'), markersize=4, linewidth=2)
+
     plt.title(title)
     plt.xlabel('Year')
     plt.ylabel('Percentage of Jobs Mentioning Technology')
@@ -601,67 +619,6 @@ def analyze_all_tech_stack(csv_path: str = "HN_case_study_expanded.csv"):
     print("All technologies and their counts have been saved to all_technologies_count.csv")
 
 
-def analyze_tech_trends_yearly_heatmap(data, tech_list, title, normalize_func=normalize_tech):
-    
-    # Group by year
-    yearly_data = data.groupby("year")
-
-    # Prepare data for graph
-    tech_trends = {tech: [] for tech in tech_list}
-    years = []
-
-    for year, group in yearly_data:
-        years.append(year)
-        techs = group['tech_stack'].dropna().str.split(',').explode().apply(normalize_func)
-        tech_counts = techs.value_counts()
-        group_size = len(group)  # Number of entries in the group
-        
-        for tech in tech_list:
-            tech_trends[tech].append(tech_counts.get(tech, 0) / group_size)
-
-    # Convert tech_trends to a DataFrame for easier manipulation
-    df_trends = pd.DataFrame(tech_trends, index=years)
-    
-    # Normalize the data
-    df_normalized = (df_trends - df_trends.min()) / (df_trends.max() - df_trends.min())
-
-    # Create a custom colormap from blue to red
-    colors = ['blue', 'white', 'red']
-    n_bins = 100
-    cmap = LinearSegmentedColormap.from_list('custom', colors, N=n_bins)
-
-    # Plotting
-    fig, ax = plt.subplots(figsize=(20, 10))
-    
-    # Create a mappable object
-    im = ax.imshow(df_normalized.T, cmap=cmap, aspect='auto', 
-                   extent=[years[0]-0.5, years[-1]+0.5, -0.5, len(tech_list)-0.5])
-
-    # Set y-axis ticks and labels
-    ax.set_yticks(range(len(tech_list)))
-    ax.set_yticklabels(tech_list)
-
-    # Set x-axis to show dates
-    ax.set_xticks(years)
-    ax.set_xticklabels(years)
-    
-    plt.title(title)
-    plt.xlabel('Year')
-    
-    # Add colorbar using the mappable object
-    plt.colorbar(im, label='Normalized Usage (Blue: Min, Red: Max)')
-    
-    plt.tight_layout()
-    
-    # Generate filename from title
-    filename = title.lower().replace(' ', '_') + '_yearly_heatmap.png'
-    plt.savefig(filename, dpi=300, bbox_inches='tight')
-    plt.close()
-
-    print(f"Heatmap plot saved as {filename}")
-
-
-
 def temporal_analysis(csv_path: str = "HN_case_study_expanded.csv"):
     # Read the CSV file
     df = pd.read_csv(csv_path)
@@ -680,8 +637,8 @@ def temporal_analysis(csv_path: str = "HN_case_study_expanded.csv"):
         (160, 180), (180, 200), (200, 220), (220, float('inf'))
     ]
     range_labels = [
-        '0-100k', '100k-120k', '120k-140k', '140k-160k',
-        '160k-180k', '180k-200k', '200k-220k', '220k+'
+        '$0-100k', '$100k-120k', '$120k-140k', '$140k-160k',
+        '$160k-180k', '$180k-200k', '$200k-220k', '$220k+'
     ]
 
     # Categorize salaries
@@ -715,7 +672,7 @@ def temporal_analysis(csv_path: str = "HN_case_study_expanded.csv"):
     analyze_compensation_trends(df_job_offers)
     analyze_company_sizes(monthly_data)
     analyze_top_tech_stack(df_job_offers)
-
+    plot_trend(list(monthly_data.size().items()), 'Job Postings Trend (2011-2024)', 'Number of Job Postings', 'line')
 
     # List of DevOps technologies to track
     devops_techs = [
@@ -727,7 +684,7 @@ def temporal_analysis(csv_path: str = "HN_case_study_expanded.csv"):
 
     # Pytorch vs. Tensorflow analysis
     ML_techs = ['pytorch', 'tensorflow']    
-    analyze_tech_trends(df_job_offers, ML_techs, "ML Frameworks")
+    analyze_tech_trends(df_job_offers, ML_techs, "Machine Learning Frameworks")
     #analyze_tech_monthly_trends(df_job_offers, ML_techs, "ML Frameworks")
 
     #Cloud providers analysis
@@ -740,9 +697,17 @@ def temporal_analysis(csv_path: str = "HN_case_study_expanded.csv"):
     analyze_tech_stack(df_job_offers, frontend_techs, "Frontend Frameworks")
     analyze_tech_trends(df_job_offers, frontend_techs, "Frontend Frameworks")
 
+    # Database analysis
+    database_tech = ['postgres', 'mongodb', 'redis']
+    analyze_tech_trends(df_job_offers, database_tech, "Database")
 
-    analyze_tech_trends_yearly_heatmap(df_job_offers, devops_techs, "DevOPs", normalize_func=normalize_tech)
+    #search analysis
+    search_tech = ['elastic search', 'algolia']
+    analyze_tech_trends(df_job_offers, search_tech, "Search")
 
+    #DevOps tools battle
+    devops_tools = ['kubernetes', 'terraform', 'docker']
+    analyze_tech_trends(df_job_offers, devops_tools, "DevOps Tools")
 
     # Calculate the number of job postings per year
     numerical_analysis(df_job_offers)
@@ -855,7 +820,7 @@ def analyze_top_countries(df: pd.DataFrame):
     # Create a bar plot
     plt.figure(figsize=(12, 6))
     plt.bar(top_countries_df['Country'], top_countries_df['Count'])
-    plt.title('Top 10 Countries in Job Postings')
+    plt.title('Top 10 Countries in Job Postings (2011-2024)')
     plt.xlabel('Country')
     plt.ylabel('Number of Job Postings')
     plt.xticks(rotation=45)
@@ -885,6 +850,9 @@ def plot_trend(data: List[Tuple[str, float]], title: str, ylabel: str, plot_type
     plt.ylabel(ylabel)
     plt.xticks(rotation=45)
     plt.tight_layout()
+
+    # Format y-axis as percentage
+    plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
     
     # Add a subtle line on top of the filled area for better visibility
     plt.plot(dates, values, color='black', linewidth=0.5)
