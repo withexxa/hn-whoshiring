@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import matplotlib.dates as mdates
 from datetime import timedelta
+from matplotlib.colors import LinearSegmentedColormap
 
 from model import HNJobPosting
 
@@ -224,8 +225,11 @@ def analyze_company_sizes(monthly_data):
 def normalize_tech(tech):
         tech = tech.lower().strip()
         replacements = {
-            'javascript': 'js',
-            'typescript': 'ts',
+            'javascript': 'js', 'javascript (es6)': 'js', 'es6 javascript': 'js','vanilla javascript': 'js',
+            'javascript/es6': 'js', 'javascript es6': 'js','frontend javascript': 'js',
+
+            'typescript': 'ts', 'typescript 3.5': 'ts', 'typescript 3.6': 'ts', 'typescript 3.7': 'ts', 'typescript 3.8': 'ts',
+            'typescript2': 'ts',
             
             'react.js': 'react','reactjs': 'react','react native': 'react','react-native': 'react',
             'react/redux': 'react','reactnative': 'react','react js': 'react','javascript/react': 'react',
@@ -247,7 +251,18 @@ def normalize_tech(tech):
             'svelte js':'svelte','svelte.js':'svelte','svelte.js 3':'svelte','svelte.js 2':'svelte','svelte.js 1':'svelte',
             
             'node.js': 'node','nodejs': 'node',
-            'postgresql': 'postgres',
+
+            'postgresql': 'postgres', 'postgressql': 'postgres', 'postgres rds': 'postgres',
+            'postgres db': 'postgres', 'postgresdb': 'postgres', 'postgres/mysql': 'postgres',
+            'rds postgres': 'postgres', 'postgre': 'postgres', 'postgres sql': 'postgres',
+            'rds / postgresql': 'postgres', 'postgresql 9.4': 'postgres', 'postgresql 9.6': 'postgres',
+            'postgresql 10': 'postgres', 'postgresql 11': 'postgres', 'postgresql 12': 'postgres',
+            'postgresql 13': 'postgres', 'postgresql 14': 'postgres', 'postgresql 15': 'postgres',
+
+            'mongo': 'mongodb', 'mongo db': 'mongodb','mongodb atlas': 'mongodb',
+
+            'redis failover': 'redis', 'redis labs': 'redis',
+
             'golang': 'go',
             'ruby on rails': 'rails',
 
@@ -271,8 +286,12 @@ def normalize_tech(tech):
             'elasticsearch': 'elastic search', 
             'html5': 'html',
             'css3': 'css', 
-            'elastic': 'elastic search', 
-            'python3': 'python', 
+            'elastic': 'elastic search',
+
+            'python3': 'python', 'python 3': 'python', 'python/django': 'python', 'python 3.6': 'python', 'python 2.7': 'python',
+            'ipython': 'python', 'serverless python': 'python', 'python 3.9': 'python', 'python 3.8': 'python', 'python 3.7': 'python',
+            'django/python': 'python',
+
             
             'tensorflow/caffe': 'tensorflow', 'tensorflow probability': 'tensorflow','tensorflow': 'tensorflow', 
             'tensorflow.js': 'tensorflow','smile/tensorflow': 'tensorflow','tensorflow & keras': 'tensorflow', 
@@ -582,6 +601,67 @@ def analyze_all_tech_stack(csv_path: str = "HN_case_study_expanded.csv"):
     print("All technologies and their counts have been saved to all_technologies_count.csv")
 
 
+def analyze_tech_trends_yearly_heatmap(data, tech_list, title, normalize_func=normalize_tech):
+    
+    # Group by year
+    yearly_data = data.groupby("year")
+
+    # Prepare data for graph
+    tech_trends = {tech: [] for tech in tech_list}
+    years = []
+
+    for year, group in yearly_data:
+        years.append(year)
+        techs = group['tech_stack'].dropna().str.split(',').explode().apply(normalize_func)
+        tech_counts = techs.value_counts()
+        group_size = len(group)  # Number of entries in the group
+        
+        for tech in tech_list:
+            tech_trends[tech].append(tech_counts.get(tech, 0) / group_size)
+
+    # Convert tech_trends to a DataFrame for easier manipulation
+    df_trends = pd.DataFrame(tech_trends, index=years)
+    
+    # Normalize the data
+    df_normalized = (df_trends - df_trends.min()) / (df_trends.max() - df_trends.min())
+
+    # Create a custom colormap from blue to red
+    colors = ['blue', 'white', 'red']
+    n_bins = 100
+    cmap = LinearSegmentedColormap.from_list('custom', colors, N=n_bins)
+
+    # Plotting
+    fig, ax = plt.subplots(figsize=(20, 10))
+    
+    # Create a mappable object
+    im = ax.imshow(df_normalized.T, cmap=cmap, aspect='auto', 
+                   extent=[years[0]-0.5, years[-1]+0.5, -0.5, len(tech_list)-0.5])
+
+    # Set y-axis ticks and labels
+    ax.set_yticks(range(len(tech_list)))
+    ax.set_yticklabels(tech_list)
+
+    # Set x-axis to show dates
+    ax.set_xticks(years)
+    ax.set_xticklabels(years)
+    
+    plt.title(title)
+    plt.xlabel('Year')
+    
+    # Add colorbar using the mappable object
+    plt.colorbar(im, label='Normalized Usage (Blue: Min, Red: Max)')
+    
+    plt.tight_layout()
+    
+    # Generate filename from title
+    filename = title.lower().replace(' ', '_') + '_yearly_heatmap.png'
+    plt.savefig(filename, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    print(f"Heatmap plot saved as {filename}")
+
+
+
 def temporal_analysis(csv_path: str = "HN_case_study_expanded.csv"):
     # Read the CSV file
     df = pd.read_csv(csv_path)
@@ -660,8 +740,14 @@ def temporal_analysis(csv_path: str = "HN_case_study_expanded.csv"):
     analyze_tech_stack(df_job_offers, frontend_techs, "Frontend Frameworks")
     analyze_tech_trends(df_job_offers, frontend_techs, "Frontend Frameworks")
 
+
+    analyze_tech_trends_yearly_heatmap(df_job_offers, devops_techs, "DevOPs", normalize_func=normalize_tech)
+
+
     # Calculate the number of job postings per year
     numerical_analysis(df_job_offers)
+
+
  
  
 def numerical_analysis(df_job_offers: pd.DataFrame):
